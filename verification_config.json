@@ -1,0 +1,49 @@
+{
+  "_description": "Configuration for the Student Understanding Verification and Analysis module (AMS-LAS). All AUVA weights below are an INITIAL PROPOSED CONFIGURATION and are NOT scientifically validated universal weights; they must be experimentally evaluated.",
+  "auva_weights": {
+    "semantic_similarity": 0.35,
+    "concept_coverage": 0.25,
+    "attention": 0.15,
+    "speech_confidence": 0.10,
+    "knowledge_gap_penalty": 0.10,
+    "misconception_penalty": 0.05
+  },
+  "understanding_levels": [
+    { "min": 90, "label": "Excellent Understanding" },
+    { "min": 75, "label": "Strong Understanding" },
+    { "min": 60, "label": "Moderate Understanding" },
+    { "min": 40, "label": "Partial Understanding" },
+    { "min": 0, "label": "Needs Improvement" }
+  ],
+  "severity_weights": {
+    "low": 0.30,
+    "medium": 0.60,
+    "high": 1.00
+  },
+  "neutral_component_score": 50,
+  "concept_coverage": {
+    "high_threshold": 0.65,
+    "low_threshold": 0.38,
+    "ambiguous_llm_fallback": false
+  },
+  "llm_model": "meta/llama-3.2-11b-vision-instruct",
+  "whisper": {
+    "_description": "Speech-to-text backend selection. 'auto' = local faster-whisper when installed, otherwise the OpenAI-compatible API fallback.",
+    "backend": "auto",
+    "model_size": "base",
+    "api_model": "whisper-1",
+    "timeout_seconds": 300
+  },
+  "embedding": {
+    "strategy_order": ["sentence_transformers", "api", "lexical"],
+    "sentence_transformer_model": "all-MiniLM-L6-v2",
+    "api_embedding_model": "nvidia/nv-embedqa-e5-v5"
+  },
+  "confidence_weights": {
+    "explanation_amount": 0.20,
+    "transcript_quality": 0.20,
+    "audio_quality": 0.15,
+    "concepts_evaluated": 0.20,
+    "analysis_completeness": 0.25
+  }
+}

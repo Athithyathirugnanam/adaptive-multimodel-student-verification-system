@@ -1,0 +1,12 @@
+flask==3.0.3
+openai==1.40.3
+flask-cors==4.0.1
+httpx==0.27.2
+opencv-python==5.0.0.93
+pytesseract==0.3.13
+numpy==2.5.2
+Pillow==12.3.0
+# Whisper (local speech-to-text; falls back to the OpenAI-compatible API)
+faster-whisper==1.2.0
+# Bundled ffmpeg binary used for audio extraction from recordings
+imageio-ffmpeg==0.6.0

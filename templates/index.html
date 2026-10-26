@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Student Learning Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=8">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h1>LearnAI</h1>
+                </div>
+                <p class="tagline">Your AI Study Companion</p>
+            </div>
+            <div class="header-right">
+                <div class="model-info">
+                    <i class="fas fa-robot"></i>
+                    <span>Llama 3.1 8B</span>
+                </div>
+                <p>Powered by NVIDIA</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Study Section (First) -->
+            <section id="study-section" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-book-open"></i> Search & Study</h2>
+                    <p>Search any topic and get clear, structured explanations</p>
+                </div>
+                
+                <div class="study-container">
+                    <div class="study-form">
+                        <div class="form-group">
+                            <label for="explain-topic">What topic do you want to study?</label>
+                            <input type="text" id="explain-topic" placeholder="e.g., Photosynthesis, Newton's Laws, Python...">
+                        </div>
+                        <div class="form-group">
+                            <label for="explain-level">Difficulty Level</label>
+                            <select id="explain-level">
+                                <option value="beginner" selected>Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="advanced">Advanced</option>
+                            </select>
+                        </div>
+                        <button id="explain-btn" class="primary-btn">
+                            <i class="fas fa-search"></i> Search & Study
+                        </button>
+                    </div>
+                    
+                    <div id="explain-result" class="explain-result hidden">
+                        <div class="result-header">
+                            <h3>Study Material</h3>
+                            <button id="new-explain-btn" class="secondary-btn">New Search</button>
+                        </div>
+                        <div id="explain-content" class="explain-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quiz Section (Below the passage) -->
+            <section id="quiz-section" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-question-circle"></i> Quiz &amp; Understanding Verification</h2>
+                    <p>Answer each question in your own words and get an explainable verification of your understanding</p>
+                </div>
+                
+                <div class="quiz-container">
+                    <div class="quiz-form">
+                        <p class="quiz-topic-display" id="quiz-topic-display">Search a topic above to generate a quiz</p>
+                        <button id="generate-quiz-btn" class="primary-btn">
+                            <i class="fas fa-magic"></i> Generate Quiz
+                        </button>
+                    </div>
+                    
+                    <div id="quiz-result" class="quiz-result hidden">
+                        <div class="result-header">
+                            <h3>Quiz Session</h3>
+                            <button id="new-quiz-btn" class="secondary-btn">New Quiz</button>
+                        </div>
+                        
+                        <!-- Real-time AI Proctoring Status Bar -->
+                        <div id="proctoring-status-bar" class="proctoring-status-bar hidden">
+                            <span class="proctoring-status-pill"><i class="fas fa-shield-alt"></i> PROCTORING STATUS: ACTIVE</span>
+                            <span id="proctoring-warning-badge" class="proctoring-warning-badge">Warnings: 0 / 3</span>
+                        </div>
+                        
+                        <div class="quiz-progress">
+                            <span id="current-question">Question 1</span>
+                            <span id="question-count">of 5</span>
+                        </div>
+                        
+                        <div id="quiz-content" class="quiz-content">
+                            <p>Click "Start Quiz" to begin answering questions.</p>
+                        </div>
+                        
+                        <!-- Per-answer understanding verification feedback (AUVA) -->
+                        <div id="answer-feedback" class="answer-feedback hidden"></div>
+                        
+                        <div class="answer-controls">
+                            <button id="start-quiz-btn" class="primary-btn">
+                                <i class="fas fa-play"></i> Start Quiz
+                            </button>
+                            <button id="next-question-btn" class="secondary-btn hidden">
+                                <i class="fas fa-arrow-right"></i> Next Question
+                            </button>
+                        </div>
+                        
+                        <div class="answer-display hidden">
+                            <h4><i class="fas fa-microphone"></i> Your transcribed answer (Whisper):</h4>
+                            <p id="transcribed-answer" class="transcribed-text"></p>
+                        </div>
+                        
+                        <!-- Camera recording interface (OpenCV capture + Whisper speech-to-text).
+                             The student NEVER types their answer - they explain out loud. -->
+                        <div id="answer-recorder" class="answer-recorder hidden">
+                            <h4 class="recorder-title"><i class="fas fa-video"></i> Explain the Concept</h4>
+
+                            <div class="camera-panel">
+                                <video id="camera-preview" autoplay playsinline muted></video>
+                                <video id="recording-playback" controls class="hidden"></video>
+                                <div id="camera-placeholder" class="camera-placeholder">
+                                    <i class="fas fa-video-slash"></i>
+                                    <p>Camera is off</p>
+                                    <button id="enable-media-btn" class="secondary-btn">
+                                        <i class="fas fa-plug"></i> Enable Camera &amp; Microphone
+                                    </button>
+                                </div>
+                                <div id="recording-indicator" class="recording-indicator hidden">
+                                    <span class="rec-dot"></span> REC
+                                </div>
+                            </div>
+
+                            <!-- Live Whisper transcript of the student's spoken answer.
+                                 Updated continuously while recording; the final text shown
+                                 here is exactly what the verification pipeline receives. -->
+                            <div id="live-transcript-panel" class="live-transcript-panel">
+                                <div class="live-transcript-header">
+                                    <h4><i class="fas fa-closed-captioning"></i> Your Answer</h4>
+                                    <span id="live-transcript-status" class="live-transcript-status">Waiting...</span>
+                                </div>
+                                <div id="live-transcript-text" class="live-transcript-text placeholder" aria-live="polite">Your spoken words will appear here while you explain...</div>
+                            </div>
+
+                            <div class="device-status">
+                                <span id="mic-status" class="status-pill status-inactive">🎙 Microphone: Inactive</span>
+                                <span id="cam-status" class="status-pill status-inactive">🎥 Camera: Inactive</span>
+                                <span id="rec-timer" class="rec-timer">00:00</span>
+                            </div>
+
+                            <!-- Microphone device selector - lets the student pick the
+                                 correct input device if the default one is silent/muted. -->
+                            <div class="mic-device-selector">
+                                <label for="mic-device"><i class="fas fa-headphones"></i> Microphone device</label>
+                                <select id="mic-device">
+                                    <option value="" selected>Default microphone</option>
+                                </select>
+                            </div>
+
+                            <!-- Live microphone level bar - shows whether the mic is
+                                 actually capturing sound so a silent recording is caught. -->
+                            <div id="mic-level" class="mic-level">
+                                <div class="mic-level-label">
+                                    <i class="fas fa-microphone"></i>
+                                    <span>Microphone level</span>
+                                </div>
+                                <div class="mic-level-track">
+                                    <div id="mic-level-fill" class="mic-level-fill"></div>
+                                </div>
+                                <span id="mic-level-text" class="mic-level-text">Waiting...</span>
+                            </div>
+
+                            <div id="recorder-message" class="recorder-message hidden"></div>
+
+                            <div class="recorder-controls">
+                                <button id="start-recording-btn" class="primary-btn" disabled>
+                                    <i class="fas fa-circle"></i> Start Recording
+                                </button>
+                                <button id="pause-recording-btn" class="secondary-btn" disabled>
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button id="stop-recording-btn" class="secondary-btn" disabled>
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                                <button id="rerecord-btn" class="secondary-btn hidden">
+                                    <i class="fas fa-redo"></i> Re-record
+                                </button>
+                                <button id="submit-answer-btn" class="primary-btn" disabled>
+                                    <i class="fas fa-check"></i> Submit Recording &amp; Verify
+                                </button>
+                            </div>
+
+                            <p class="recorder-note">
+                                Speak your explanation out loud - it is transcribed automatically by
+                                Whisper and verified by AI. Nothing is submitted until you press Submit.
+                            </p>
+                        </div>
+                        
+                        <!-- Aggregate understanding summary shown when the quiz completes -->
+                        <div id="quiz-summary" class="quiz-summary hidden"></div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Chat Bot Icon (Upper Right) -->
+    <div class="chat-bot-icon" id="chat-bot-icon">
+        <i class="fas fa-comments"></i>
+    </div>
+
+    <!-- Chat Bot Widget (Expands when icon is clicked) -->
+    <div class="chat-widget hidden" id="chat-widget">
+        <div class="chat-widget-header">
+            <div class="chat-widget-title">
+                <i class="fas fa-robot"></i>
+                <span>AI Tutor</span>
+            </div>
+            <button class="chat-widget-close" id="chat-widget-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="chat-widget-body" id="chat-widget-body">
+            <div id="chat-messages" class="chat-messages">
+                <div class="message bot">
+                    <div class="avatar"><i class="fas fa-robot"></i></div>
+                    <div class="message-content">
+                        <p>Hello! I'm your AI tutor. Ask me anything! 🎓</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <textarea id="chat-input" placeholder="Type your question..." rows="1"></textarea>
+                    <button id="send-btn" class="send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loader">
+            <div class="spinner"></div>
+            <p>Generating response...</p>
+        </div>
+    <!-- Focused Misconception Explanation Modal -->
+    <div id="misconception-modal" class="misconception-modal hidden">
+        <div class="misconception-modal-backdrop" id="misconception-modal-backdrop"></div>
+        <div class="misconception-modal-dialog">
+            <div class="misconception-modal-header">
+                <div class="misconception-modal-title">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Read About Misconception</span>
+                </div>
+                <button type="button" class="misconception-modal-close" id="close-misconception-modal-btn" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="misconception-modal-body" id="misconception-modal-body">
+                <!-- AI-generated misconception explanation is rendered here -->
+            </div>
+            <div class="misconception-modal-footer">
+                <button type="button" class="primary-btn" id="done-misconception-btn">
+                    <i class="fas fa-check"></i> Back to Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=13"></script>
+</body>
+</html>
